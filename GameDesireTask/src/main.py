@@ -1,4 +1,4 @@
-import tornado.ioloop
+﻿import tornado.ioloop
 import tornado.web
 import json
 
@@ -55,7 +55,7 @@ class AddResult(tornado.web.RequestHandler):
 
 if __name__ == "__main__":
     application = tornado.web.Application([
-        (r"/add/(.*)", AddResult),
+        (r"/add/([A-Za-z0-9_]*/-?[0-9]*/[0-9]*/.*)", AddResult),
     ])
     application.listen(8888)
     tornado.ioloop.IOLoop.current().start()
