@@ -5,39 +5,62 @@ import json
 all_results = []
 
 class AddResult(tornado.web.RequestHandler):
-    def get(self, _result):
-        split_result = _result.split('/')
-        
-        if self.check_correct(split_result):
-            result = { 'GAMEID' : split_result[0],
-                       'UID' : int(split_result[1]),
-                       'end_timestamp': int(split_result[2]),
-                       'game_result' : float(split_result[3])
+
+    def get(self):
+        self.correct_result = True
+
+        gameid = self.get_argument("gameid")
+        uid = self.get_argument("uid")
+        end_timestamp = int(self.get_argument("end_timestamp"))
+        game_result = self.get_argument("game_result")
+
+        self.check_gameid(gameid)
+        self.check_uid(uid)
+        self.check_end_timestamp(end_timestamp)
+        self.check_game_result(game_result)
+
+        if self.correct_result:
+            result = { 'GAMEID' : gameid,
+                       'UID' : int(uid),
+                       'end_timestamp': end_timestamp,
+                       'game_result' : float(game_result)
                         }
-            all_results.append(json.dumps(result, sort_keys=True))
+            all_results.append(json.dumps(result, sort_keys=True, indent=4, separators=(',', ': ')))
             self.write("Result has been added")
         else:
             self.write("Result has not been added")
 
-    def check_uid(self, data):
-        if self.represents_int(data[1]) and int(data[1]) >= 0:
+    def check_gameid(self, gameid):
+        if gameid != None:
             pass
         else:
-            self.write("Incorrect UID<br>")
-            self.correct = False
+            self.correct_result = False
+            self.write("Invalid GAMEID<br>")
 
-    def check_game_result(self, data):
-        if self.represents_float(data[3]):
+    def check_uid(self, uid):
+        if self.represents_int(uid):
+             if int(uid) >= 0:
+                 pass
+             else:
+                self.correct_result = False
+                self.write("Invalid UID<br>") 
+        else:
+            self.correct_result = False
+            self.write("Invalid UID<br>")     
+
+    def check_end_timestamp(self, end_timestamp):
+        if end_timestamp != None:
+            pass
+        else:
+            self.correct_result = False
+            self.write("Incorrect end timestamp<br>")      
+
+    def check_game_result(self, game_result):
+        if self.represents_float(game_result):
             pass
         else:
             self.write("Incorrect game result<br>")
-            self.correct = False
-
-    def check_correct(self, data):
-        self.correct = True
-        self.check_uid(data)
-        self.check_game_result(data)
-        return self.correct
+            self.correct_result = False
         
     def represents_int(self, test_int):
         try:
@@ -53,9 +76,10 @@ class AddResult(tornado.web.RequestHandler):
         except ValueError:
             return False
 
+
 if __name__ == "__main__":
     application = tornado.web.Application([
-        (r"/add/([A-Za-z0-9_]*/-?[0-9]*/[0-9]*/.*)", AddResult),
+        (r"/add", AddResult)
     ])
     application.listen(8888)
     tornado.ioloop.IOLoop.current().start()
