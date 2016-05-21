@@ -2,6 +2,8 @@
 import tornado.web
 import json
 from operator import itemgetter
+import datetime
+
 
 all_results = []
 
@@ -91,9 +93,71 @@ class AddResult(tornado.web.RequestHandler):
 class ShowRanking(tornado.web.RequestHandler):
 
     def get(self):
-        gameid = self.get_argument("gameid")
+        gameid, date = self.get_arguments()
         rank = self.get_ranking(gameid)
 
+        if date == None:
+            for r in rank:
+                self.write(str(r['UID']) + ": ")
+                self.write(str(r['game_result']))
+                self.write("<br>")
+        else:
+            for r in rank:
+                end_timestamp_date = datetime.datetime.fromtimestamp(r['end_timestamp'])
+                if date.date() == end_timestamp_date.date():
+                    self.write(str(r['UID']) + ": ")
+                    self.write(str(r['game_result']))
+                    self.write("<br>")
+
+
+    def get_arguments(self):
+        gameid = self.get_argument("gameid")
+        day = self.get_argument("d", None)
+        month = self.get_argument("m", None)
+        year = self.get_argument("y", None)
+
+        if day != None and month != None and year != None:
+            date = self.check_correct_date(day, month, year)
+            if date != None:
+                self.write(str(date.date()) + "<br>")
+        else:
+            date = None
+
+        return (gameid, date)
+
+
+    def check_correct_date(self, day, month, year):
+        correct_date = True
+        
+        if day != None:
+            try:
+                day = int(day)
+            except:
+                self.write("Invalid day parameter<br>")
+                correct_date = False
+        
+        if month != None:
+            try:
+                month = int(month)
+            except:
+                self.write("Invalid month parameter<br>")
+                correct_date = False
+        
+        if year != None:
+            try:
+                year = int(year)
+            except:
+                self.write("Invalid year parameter<br>")
+                correct_date = False
+        
+        if correct_date == True:
+            try:
+                date = datetime.datetime(year, month, day)
+            except Exception as e:
+                date = None
+                self.write(str(e))
+
+        return date
 
     def get_ranking(self, gameid):
         rank = []
@@ -113,7 +177,7 @@ class ShowRanking(tornado.web.RequestHandler):
 if __name__ == "__main__":
     application = tornado.web.Application([
         (r"/add", AddResult),
-        (r"/show_ranking", ShowRanking)
+        (r"/show_ranking", ShowRanking),
     ])
     application.listen(8888)
     tornado.ioloop.IOLoop.current().start()
