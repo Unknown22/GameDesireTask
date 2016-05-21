@@ -3,7 +3,9 @@ import tornado.web
 import json
 from operator import itemgetter
 import datetime
+import os
 
+from ShowRankingSite import ShowRankingSite
 
 all_results = []
 
@@ -98,15 +100,17 @@ class ShowRanking(tornado.web.RequestHandler):
 
         if date != None:
             rank_d = self.get_daily_ranking(rank, date)
-            for r in rank_d:
-                self.write(str(r['UID']) + ": ")
-                self.write(str(r['game_result']))
-                self.write("<br>")
+            self.show_ranking(rank_d, gameid, date)
+            #for r in rank_d:
+            #    self.write(str(r['UID']) + ": ")
+            #    self.write(str(r['game_result']))
+            #    self.write("<br>")
         else:
-            for r in rank:
-                self.write(str(r['UID']) + ": ")
-                self.write(str(r['game_result']))
-                self.write("<br>")
+            self.show_ranking(rank, gameid)
+            #for r in rank:
+            #    self.write(str(r['UID']) + ": ")
+            #    self.write(str(r['game_result']))
+            #    self.write("<br>")
 
 
     def get_daily_ranking(self, rank, date):
@@ -126,13 +130,28 @@ class ShowRanking(tornado.web.RequestHandler):
 
         if day != None and month != None and year != None:
             date = self.check_correct_date(day, month, year)
-            if date != None:
-                self.write(str(date.date()) + "<br>")
         else:
             date = None
 
         return (gameid, date)
 
+    def show_ranking(self, rank, gameid, date = None):
+        root = os.path.dirname(__file__)
+
+        self.write("<!DOCTYPE html>\n" + \
+            "<html>\n" + \
+            "<head>\n" + \
+            "<meta charset=\"UTF-8\">\n" + \
+            "<title>" + \
+            gameid + " ranking"+ \
+            "</title>\n" + \
+            ShowRankingSite.get_css() + \
+            "</head>\n" + \
+            "<body>\n" + \
+            ShowRankingSite.get_body(gameid, rank, date) + \
+            "</body>\n" + \
+            "</html>")
+            
 
     def check_correct_date(self, day, month, year):
         correct_date = True
