@@ -112,6 +112,7 @@ class ShowRanking(tornado.web.RequestHandler):
     Aby wyświetlić ranking z konkretnego dnia należy podać dodatkowe parametry d, m oraz y (odpowiednio dzień, miesiąc i rok), np.
     http://localhost:8888/show_ranking?gameid=gomoku&d=11&m=5&y=2016
     Zostanie wyświetlony ranking z gry o id "gomoku". Ranking dotyczyć będzie tylko wyników z 11 maja 2016 roku.
+    Jeżeli jakiś parametr daty będzie niepoprawny zostanie wyświetlona informacja o tym i zostanie wyświetlony ranking ogólny dla danej gry.
     """
     def get(self):
         gameid, date = self.get_arguments()
