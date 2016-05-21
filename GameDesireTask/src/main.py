@@ -96,18 +96,26 @@ class ShowRanking(tornado.web.RequestHandler):
         gameid, date = self.get_arguments()
         rank = self.get_ranking(gameid)
 
-        if date == None:
-            for r in rank:
+        if date != None:
+            rank_d = self.get_daily_ranking(rank, date)
+            for r in rank_d:
                 self.write(str(r['UID']) + ": ")
                 self.write(str(r['game_result']))
                 self.write("<br>")
         else:
             for r in rank:
-                end_timestamp_date = datetime.datetime.fromtimestamp(r['end_timestamp'])
-                if date.date() == end_timestamp_date.date():
-                    self.write(str(r['UID']) + ": ")
-                    self.write(str(r['game_result']))
-                    self.write("<br>")
+                self.write(str(r['UID']) + ": ")
+                self.write(str(r['game_result']))
+                self.write("<br>")
+
+
+    def get_daily_ranking(self, rank, date):
+        rank_d = []
+        for r in rank:
+            end_timestamp_date = datetime.datetime.fromtimestamp(r['end_timestamp'])
+            if date.date() == end_timestamp_date.date():
+                rank_d.append(r)
+        return rank_d
 
 
     def get_arguments(self):
