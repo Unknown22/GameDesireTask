@@ -10,7 +10,14 @@ from ShowRankingSite import ShowRankingSite
 all_results = []
 
 class AddResult(tornado.web.RequestHandler):
-
+    """
+    Klasa obsługuje dodawanie rezultatów z gry.
+    Przyjmuje z zapytania parametry gameid, uid, end_timestamp i game_result, np.
+    http://localhost:8888/add?gameid=gomoku&uid=1123&end_timestamp=1462959258&game_result=12312
+    
+    Jeżeli jakiś parametr nie zostanie podany zostanie zwrócony błąd 400: Bad Request.
+    Jeżeli jakiś parametr nie przejdzie walidacji zostanie wyświetlona odpowiednia informacja a próba dodania nieprawidłowego rezultatu zakończy się niepowodzeniem.
+    """
     def get(self):
         self.correct_result = True
 
@@ -34,6 +41,9 @@ class AddResult(tornado.web.RequestHandler):
 
 
     def check_arguments_correct(self, end_timestamp, game_result, gameid, uid):
+        """
+        Metoda waliduje poprawność podanych argumentów
+        """
         self.check_gameid(gameid)
         self.check_uid(uid)
         self.check_end_timestamp(end_timestamp)
@@ -93,7 +103,16 @@ class AddResult(tornado.web.RequestHandler):
 
 
 class ShowRanking(tornado.web.RequestHandler):
+    """
+    Klasa obsługuje ranking ogólny, dzienne rankingi oraz odpowiada za ich wyświetlanie w przeglądarce zgodnie z podanymi parametrami.
+    Aby wyświetlić ranking ogólny w zapytaniu jako argument należy podać GAMEID, np.
+    http://localhost:8888/show_ranking?gameid=gomoku
+    Zostanie wyświetlony ranking ogólny z gry o id "gomoku"
 
+    Aby wyświetlić ranking z konkretnego dnia należy podać dodatkowe parametry d, m oraz y (odpowiednio dzień, miesiąc i rok), np.
+    http://localhost:8888/show_ranking?gameid=gomoku&d=11&m=5&y=2016
+    Zostanie wyświetlony ranking z gry o id "gomoku". Ranking dotyczyć będzie tylko wyników z 11 maja 2016 roku.
+    """
     def get(self):
         gameid, date = self.get_arguments()
         rank = self.get_ranking(gameid)
@@ -101,16 +120,22 @@ class ShowRanking(tornado.web.RequestHandler):
         if date != None:
             rank_d = self.get_daily_ranking(rank, date)
             self.show_ranking(rank_d, gameid, date)
-            #for r in rank_d:
-            #    self.write(str(r['UID']) + ": ")
-            #    self.write(str(r['game_result']))
-            #    self.write("<br>")
         else:
             self.show_ranking(rank, gameid)
-            #for r in rank:
-            #    self.write(str(r['UID']) + ": ")
-            #    self.write(str(r['game_result']))
-            #    self.write("<br>")
+
+
+    def get_ranking(self, gameid):
+        rank = []
+        
+        if gameid != None:
+            for result in all_results:
+                if json.loads(result)['GAMEID'] == gameid:
+                    rank.append(json.loads(result))
+        else:
+            self.write("Invalid GAMEID<br>")
+        
+        rank.sort(key=itemgetter('game_result'), reverse=True)
+        return rank
 
 
     def get_daily_ranking(self, rank, date):
@@ -185,20 +210,6 @@ class ShowRanking(tornado.web.RequestHandler):
                 self.write(str(e))
 
         return date
-
-    def get_ranking(self, gameid):
-        rank = []
-        
-        if gameid != None:
-            for result in all_results:
-                if json.loads(result)['GAMEID'] == gameid:
-                    rank.append(json.loads(result))
-        else:
-            self.write("Invalid GAMEID<br>")
-        
-        rank.sort(key=itemgetter('game_result'), reverse=True)
-
-        return rank
 
 
 if __name__ == "__main__":
